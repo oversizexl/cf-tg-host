@@ -1,0 +1,120 @@
+export async function onRequest(context) {
+  const { request, env, params } = context;
+
+  const url = new URL(request.url);
+  let fileUrl = "https://telegra.ph/" + url.pathname + url.search;
+  // 提取 Telegram file_id（不带扩展名）
+  const fileId = url.pathname.split(".")[0].split("/")[2];
+  // 防盗链（严格）：必须携带本站或白名单 Referer；否则 403，并禁止缓存
+  const referer = request.headers.get("Referer");
+  const allowed = new Set([
+    url.origin,
+    ...String(env.ALLOWED_ORIGINS || "")
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+  ]);
+  let allowedReferer = false;
+  if (referer) {
+    try {
+      const r = new URL(referer);
+      // 本地开发域名直接放行
+      if (r.hostname === 'localhost' || r.hostname === '127.0.0.1') {
+        allowedReferer = true;
+      } else if (allowed.has(r.origin)) {
+        allowedReferer = true;
+      }
+    } catch {}
+  }
+  if (!allowedReferer) {
+    return new Response("Hotlink forbidden", {
+      status: 403,
+      headers: {
+        "Cache-Control": "no-store",
+        "Content-Type": "text/plain; charset=utf-8"
+      }
+    });
+  }
+  if (url.pathname.length > 39 && fileId) {
+    const formdata = new FormData();
+    formdata.append("file_id", url.pathname);
+
+    const requestOptions = {
+      method: "POST",
+      body: formdata,
+      redirect: "follow"
+    };
+    // /file/AgACAgEAAxkDAAMDZt1Gzs4W8dQPWiQJxO5YSH5X-gsAAt-sMRuWNelGOSaEM_9lHHgBAAMCAANtAAM2BA.png
+    //get the AgACAgEAAxkDAAMDZt1Gzs4W8dQPWiQJxO5YSH5X-gsAAt-sMRuWNelGOSaEM_9lHHgBAAMCAANtAAM2BA
+    console.log(fileId);
+    const filePath = await getFilePath(env, fileId);
+    console.log(filePath);
+    fileUrl = `https://api.telegram.org/file/bot${env.TG_Bot_Token}/${filePath}`;
+  }
+
+  const response = await fetch(fileUrl, {
+    method: request.method,
+    headers: request.headers,
+    body: request.body
+  });
+
+  // Log response details
+  console.log(response.ok, response.status);
+
+  // If the response is OK, proceed with further checks
+  if (response.ok) {
+    // Allow the admin page to directly view the image
+    if (request.headers.get("Referer") === `${url.origin}/admin`) {
+      return response;
+    }
+
+    // Initialize minimal KV metadata if missing (key = fileId)
+    if (env.img_url && fileId) {
+      const record = await env.img_url.getWithMetadata(fileId);
+      if (!record || !record.metadata) {
+        await env.img_url.put(fileId, "", {
+          metadata: { TimeStamp: Date.now() }
+        });
+      }
+    }
+    // 强制浏览器内联预览而不是下载
+    const headers = new Headers(response.headers);
+    // 透传类型，但覆盖 Content-Disposition
+    const filename = url.pathname.split("/").pop() || fileId || "file";
+    headers.set("Content-Disposition", `inline; filename="${filename}"`);
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers
+    });
+  }
+
+  return response;
+}
+
+async function getFilePath(env, file_id) {
+  try {
+    const url = `https://api.telegram.org/bot${env.TG_Bot_Token}/getFile?file_id=${file_id}`;
+    const res = await fetch(url, {
+      method: "GET"
+    });
+
+    if (!res.ok) {
+      console.error(`HTTP error! status: ${res.status}`);
+      return null;
+    }
+
+    const responseData = await res.json();
+    const { ok, result } = responseData;
+
+    if (ok && result) {
+      return result.file_path;
+    } else {
+      console.error("Error in response data:", responseData);
+      return null;
+    }
+  } catch (error) {
+    console.error("Error fetching file path:", error.message);
+    return null;
+  }
+}

@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "build": "npm --prefix frontend ci && npm --prefix frontend run build",
+    "dev": "npm run build && npx wrangler pages dev ./frontend/dist --kv \"img_url\" --port 8080 --binding ADMIN_USERNAME=admin --binding ADMIN_PASSWORD=123 --binding SESSION_SECRET=dev-secret --binding --persist-to ./data"
+  },
+  "devDependencies": {
+    "wrangler": "^4.28.1"
+  }
+}

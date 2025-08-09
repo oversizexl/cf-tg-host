@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* 让根容器占满可视区域高度 */
+html, body, #root {
+  height: 100%;
+}
+
+/* 优先使用 svh 以适配移动端地址栏伸缩 */
+body {
+  min-height: 100svh;
+}
