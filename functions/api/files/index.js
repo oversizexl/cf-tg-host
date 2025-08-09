@@ -5,7 +5,7 @@ export async function onRequest(context) {
   }
 
   const url = new URL(request.url)
-  const limitParam = parseInt(url.searchParams.get('limit') || '100', 10)
+  const limitParam = parseInt(url.searchParams.get('limit') || '10', 10)
   const limit = Number.isFinite(limitParam) && limitParam > 0 && limitParam <= 1000 ? limitParam : 100
   const cursor = url.searchParams.get('cursor') || undefined
 

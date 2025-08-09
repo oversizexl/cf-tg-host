@@ -35,20 +35,8 @@ export async function onRequest(context) {
       }
     });
   }
-  if (url.pathname.length > 39 && fileId) {
-    const formdata = new FormData();
-    formdata.append("file_id", url.pathname);
-
-    const requestOptions = {
-      method: "POST",
-      body: formdata,
-      redirect: "follow"
-    };
-    // /file/AgACAgEAAxkDAAMDZt1Gzs4W8dQPWiQJxO5YSH5X-gsAAt-sMRuWNelGOSaEM_9lHHgBAAMCAANtAAM2BA.png
-    //get the AgACAgEAAxkDAAMDZt1Gzs4W8dQPWiQJxO5YSH5X-gsAAt-sMRuWNelGOSaEM_9lHHgBAAMCAANtAAM2BA
-    console.log(fileId);
+  if (fileId) {
     const filePath = await getFilePath(env, fileId);
-    console.log(filePath);
     fileUrl = `https://api.telegram.org/file/bot${env.TG_Bot_Token}/${filePath}`;
   }
 
@@ -68,11 +56,16 @@ export async function onRequest(context) {
       return response;
     }
 
-    // Initialize minimal KV metadata if missing (key = fileId)
+    // 从 URL 路径中提取完整的文件名（包括扩展名）
+    const fullFileName = url.pathname.split("/").pop() || fileId;
+    
+    // Initialize minimal KV metadata if missing (key = fileId.ext)
     if (env.img_url && fileId) {
-      const record = await env.img_url.getWithMetadata(fileId);
+      const kvKey = fullFileName.includes('.') ? fullFileName : fileId;
+      
+      const record = await env.img_url.getWithMetadata(kvKey);
       if (!record || !record.metadata) {
-        await env.img_url.put(fileId, "", {
+        await env.img_url.put(kvKey, "", {
           metadata: { TimeStamp: Date.now() }
         });
       }
@@ -80,7 +73,7 @@ export async function onRequest(context) {
     // 强制浏览器内联预览而不是下载
     const headers = new Headers(response.headers);
     // 透传类型，但覆盖 Content-Disposition
-    const filename = url.pathname.split("/").pop() || fileId || "file";
+    const filename = fullFileName || "file";
     headers.set("Content-Disposition", `inline; filename="${filename}"`);
     return new Response(response.body, {
       status: response.status,

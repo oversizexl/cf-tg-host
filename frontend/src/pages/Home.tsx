@@ -255,7 +255,7 @@ export default function Home() {
             </div>
           )}
           <div
-            className={`relative border-2 border-dashed rounded-2xl p-12 sm:p-14 md:p-16 bg-white shadow-sm transition flex flex-col gap-6 items-center justify-center border-gray-300 hover:border-indigo-400 min-h-[40vh] sm:min-h-[48vh]`}
+            className={`relative border-2 border-dashed rounded-2xl p-12 sm:p-14 md:p-16 bg-white shadow-sm transition flex flex-col gap-6 items-center justify-center border-gray-300 hover:border-indigo-400 min-h-[50vh] sm:min-h-[55vh]`}
             onDrop={onDrop}
             onDragOver={onDragOver}
             onClick={onDropzoneClick}
@@ -279,56 +279,75 @@ export default function Home() {
               </div>
             )}
             {queue.length > 0 && (
-              <div className="w-full flex flex-wrap justify-center gap-4">
-                {queue.map(item => (
-                  <div key={item.id} className="group relative w-[120px] h-[120px] rounded-lg overflow-hidden bg-gray-100 shadow-inner">
-                    <img src={item.preview} alt={item.file.name} className="w-full h-full object-cover" />
+              <>
+                <div className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 justify-items-center mt-[-20px]">
+                  {queue.map(item => (
+                    <div key={item.id} className="group relative w-[120px] h-[120px] rounded-lg overflow-hidden bg-gray-100 shadow-inner">
+                      <img src={item.preview} alt={item.file.name} className="w-full h-full object-cover" />
 
-                    {/* 底部文件名条：提高辨识度 */}
-                    <div className="absolute left-0 right-0 bottom-0 bg-black/45 text-white text-[11px] leading-tight px-1.5 py-0.5 truncate pointer-events-none">
-                      {item.file.name}
+                      {/* 底部文件名条：提高辨识度 */}
+                      <div className="absolute left-0 right-0 bottom-0 bg-black/45 text-white text-[11px] leading-tight px-1.5 py-0.5 truncate pointer-events-none">
+                        {item.file.name}
+                      </div>
+
+                      {/* 进度条仅在上传中显示，错误/完成时隐藏，避免停在 80% */}
+                      {item.status === 'uploading' && (
+                        <div className="absolute left-2 right-2 top-1/2 -translate-y-1/2 h-1.5 rounded-full bg-white/60 backdrop-blur-[2px]">
+                          <div
+                            className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-300"
+                            style={{ width: `${item.progress}%` }}
+                          />
+                        </div>
+                      )}
+
+                      {/* 完成后的复制链接按钮（存在 resultUrl 时显示） */}
+                      {item.status === 'done' && item.resultUrl && (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); copyToClipboard(item.resultUrl!) }}
+                          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-6 px-2 inline-flex items-center justify-center text-[11px] whitespace-nowrap rounded-full bg-indigo-600 text-white/95 shadow hover:bg-indigo-700"
+                          title="复制直链"
+                        >
+                          复制链接
+                        </button>
+                      )}
+
+                      {/* 状态角标：错误与成功均位于右上，但图标不同 */}
+                      {item.status === 'error' && (
+                        <div className="absolute top-1 right-1 h-4 w-4 inline-flex items-center justify-center rounded-full bg-rose-500 text-white">
+                          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-3 w-3">
+                            <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                      )}
+                      {item.status === 'done' && (
+                        <div className="absolute top-1 right-1 h-4 w-4 inline-flex items-center justify-center rounded-full bg-emerald-500 text-white">
+                          <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-3 w-3">
+                            <path d="M5 10l3 3 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>
+                      )}
                     </div>
-
-                    {/* 进度条仅在上传中显示，错误/完成时隐藏，避免停在 80% */}
-                    {item.status === 'uploading' && (
-                      <div className="absolute left-2 right-2 top-1/2 -translate-y-1/2 h-1.5 rounded-full bg-white/60 backdrop-blur-[2px]">
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-300"
-                          style={{ width: `${item.progress}%` }}
-                        />
-                      </div>
-                    )}
-
-                    {/* 完成后的复制链接按钮（存在 resultUrl 时显示） */}
-                    {item.status === 'done' && item.resultUrl && (
-                      <button
-                        type="button"
-                        onClick={(e) => { e.stopPropagation(); copyToClipboard(item.resultUrl!) }}
-                        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 h-6 px-2 inline-flex items-center justify-center text-[11px] whitespace-nowrap rounded-full bg-indigo-600 text-white/95 shadow hover:bg-indigo-700"
-                        title="复制直链"
-                      >
-                        复制链接
-                      </button>
-                    )}
-
-                    {/* 状态角标：错误与成功均位于右上，但图标不同 */}
-                    {item.status === 'error' && (
-                      <div className="absolute top-1 right-1 h-4 w-4 inline-flex items-center justify-center rounded-full bg-rose-500 text-white">
-                        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-3 w-3">
-                          <path d="M6 6l8 8M14 6l-8 8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </div>
-                    )}
-                    {item.status === 'done' && (
-                      <div className="absolute top-1 right-1 h-4 w-4 inline-flex items-center justify-center rounded-full bg-emerald-500 text-white">
-                        <svg viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-3 w-3">
-                          <path d="M5 10l3 3 7-7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </div>
-                    )}
+                  ))}
+                </div>
+                
+                {/* 复制全部按钮 */}
+                {!hasActiveUpload && queue.some(item => item.status === 'done' && item.resultUrl) && (
+                  <div className="absolute bottom-6 left-0 right-0 flex justify-center">
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); copyAllUrls(); }}
+                      className="h-8 px-3 inline-flex items-center justify-center rounded bg-indigo-500 text-white shadow hover:bg-indigo-600 text-xs font-medium"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5 mr-1">
+                        <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                        <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                      </svg>
+                      复制全部
+                    </button>
                   </div>
-                ))}
-              </div>
+                )}
+              </>
             )}
 
             {/* 浮动 + 按钮：仅在存在队列且非上传中显示 */}
@@ -344,23 +363,6 @@ export default function Home() {
                   <path d="M12 5v14M5 12h14" strokeLinecap="round"/>
                 </svg>
               </button>
-            )}
-            
-            {/* 成功上传的文件存在时，显示复制全部按钮 */}
-            {!hasActiveUpload && queue.some(item => item.status === 'done' && item.resultUrl) && (
-              <div className="relative mt-12 w-full flex justify-center">
-                <button
-                  type="button"
-                  onClick={(e) => { e.stopPropagation(); copyAllUrls(); }}
-                  className="h-8 px-3 inline-flex items-center justify-center rounded bg-indigo-500 text-white shadow hover:bg-indigo-600 text-xs font-medium"
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5 mr-1">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-                  </svg>
-                  复制全部
-                </button>
-              </div>
             )}
           </div>
         </div>
