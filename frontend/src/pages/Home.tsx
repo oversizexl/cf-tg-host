@@ -181,6 +181,23 @@ export default function Home() {
       enqueueToast('链接已复制', 'success')
     })
   }
+  
+  // 复制所有成功上传的 URL
+  const copyAllUrls = () => {
+    const urls = queue
+      .filter(item => item.status === 'done' && item.resultUrl)
+      .map(item => item.resultUrl)
+      .filter(Boolean) as string[]
+      
+    if (urls.length === 0) {
+      enqueueToast('没有可复制的链接', 'info')
+      return
+    }
+    
+    navigator.clipboard.writeText(JSON.stringify(urls, null, 2)).then(() => {
+      enqueueToast(`已复制 ${urls.length} 个链接`, 'success')
+    })
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
@@ -327,6 +344,23 @@ export default function Home() {
                   <path d="M12 5v14M5 12h14" strokeLinecap="round"/>
                 </svg>
               </button>
+            )}
+            
+            {/* 成功上传的文件存在时，显示复制全部按钮 */}
+            {!hasActiveUpload && queue.some(item => item.status === 'done' && item.resultUrl) && (
+              <div className="absolute bottom-8 left-0 right-0 flex justify-center">
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); copyAllUrls(); }}
+                  className="h-8 px-3 inline-flex items-center justify-center rounded bg-indigo-500 text-white shadow hover:bg-indigo-600 text-xs font-medium"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="h-3.5 w-3.5 mr-1">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                  复制全部
+                </button>
+              </div>
             )}
           </div>
         </div>
