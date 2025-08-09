@@ -279,11 +279,13 @@ async function postToTelegram(url, formData, label, timeoutMs = 60000, retries =
 async function putMeta(fileId, ext, mime, env) {
     try {
         if (!env || !env.img_url) return;
-        const value = JSON.stringify({ ext, mime });
+        const value = JSON.stringify({ mime });
         const metadata = {
             TimeStamp: Date.now(),
         };
-        await env.img_url.put(fileId, value, { metadata });
+        // 直接使用 fileId.ext 作为键保存元数据
+        const key = ext ? `${fileId}.${ext}` : fileId;
+        await env.img_url.put(key, value, { metadata });
     } catch (e) {
         // 仅记录，不影响主流程
         console.log('KV put error', e && e.message ? e.message : e);
