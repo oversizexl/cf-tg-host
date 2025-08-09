@@ -348,7 +348,7 @@ export default function Home() {
             
             {/* 成功上传的文件存在时，显示复制全部按钮 */}
             {!hasActiveUpload && queue.some(item => item.status === 'done' && item.resultUrl) && (
-              <div className="absolute bottom-8 left-0 right-0 flex justify-center">
+              <div className="relative mt-12 w-full flex justify-center">
                 <button
                   type="button"
                   onClick={(e) => { e.stopPropagation(); copyAllUrls(); }}
