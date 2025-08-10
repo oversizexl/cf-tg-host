@@ -2,6 +2,9 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { logout, uploadWithProgress } from '../lib/api'
 import Toast from '../components/Toast'
+import ProgressEffects from '../components/ProgressEffects'
+import EffectSelector from '../components/EffectSelector'
+import { ProgressEffectType, DEFAULT_PROGRESS_EFFECT } from '../config/progressEffects'
 
 
 export default function Home() {
@@ -29,6 +32,9 @@ export default function Home() {
   // 计算整体进度
   const overallProgress = queue.length > 0 ? 
     queue.reduce((sum, item) => sum + (item.progress || 0), 0) / queue.length : 0
+  
+  // 进度条特效类型
+  const [progressEffect, setProgressEffect] = useState<ProgressEffectType>(DEFAULT_PROGRESS_EFFECT)
 
   // 内部导航拦截：捕获文档中的 a 链接点击，上传中给出确认
   useEffect(() => {
@@ -214,9 +220,13 @@ export default function Home() {
           onClose={() => setToasts(prev => prev.filter(x => x.id !== t.id))}
         />
       ))}
-      {/* 浮动操作区：历史图片 / 退出登录 */}
+      {/* 浮动操作区：特效选择器 / 历史图片 / 退出登录 */}
       <div className="fixed top-4 right-4 z-40">
         <div className="flex items-center gap-2 bg-white/80 backdrop-blur border border-gray-200 rounded-full px-2 py-1 shadow-sm">
+          <EffectSelector 
+            currentEffect={progressEffect}
+            onEffectChange={setProgressEffect}
+          />
           <Link
             to="/gallery"
             aria-label="历史图片"
@@ -258,19 +268,11 @@ export default function Home() {
               </button>
             </div>
           )}
-          <div
-            className={`relative rounded-2xl p-12 sm:p-14 md:p-16 bg-white shadow-sm transition flex flex-col gap-6 items-center justify-center min-h-[50vh] sm:min-h-[55vh] ${hasActiveUpload ? 'border-0' : 'border-2 border-dashed border-gray-300 hover:border-indigo-400'}`}
-            style={hasActiveUpload ? {
-              background: `conic-gradient(from 0deg at 50% 50%, 
-                #6366f1 0deg, 
-                #6366f1 ${overallProgress * 3.6}deg, 
-                #e5e7eb ${overallProgress * 3.6}deg, 
-                #e5e7eb 360deg), 
-                padding-box`,
-              border: '3px solid transparent',
-              backgroundClip: 'padding-box, border-box',
-              boxShadow: hasActiveUpload ? `0 0 20px rgba(99, 102, 241, ${Math.min(overallProgress / 100 * 0.5, 0.5)})` : undefined
-            } : {}}
+          <ProgressEffects
+            effectType={progressEffect}
+            progress={overallProgress}
+            isActive={hasActiveUpload}
+            className="relative rounded-2xl p-12 sm:p-14 md:p-16 bg-white shadow-sm transition flex flex-col gap-6 items-center justify-center min-h-[50vh] sm:min-h-[55vh]"
             onDrop={onDrop}
             onDragOver={onDragOver}
             onClick={onDropzoneClick}
@@ -376,7 +378,7 @@ export default function Home() {
                 </svg>
               </button>
             )}
-          </div>
+          </ProgressEffects>
         </div>
       </main>
     </div>
