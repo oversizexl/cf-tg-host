@@ -25,6 +25,10 @@ export default function Home() {
   const [queue, setQueue] = useState<QueueItem[]>([])
   const hasActiveUpload = queue.some(it => it.status === 'uploading')
   const hasError = queue.some(it => it.status === 'error')
+  
+  // 计算整体进度
+  const overallProgress = queue.length > 0 ? 
+    queue.reduce((sum, item) => sum + (item.progress || 0), 0) / queue.length : 0
 
   // 内部导航拦截：捕获文档中的 a 链接点击，上传中给出确认
   useEffect(() => {
@@ -255,7 +259,18 @@ export default function Home() {
             </div>
           )}
           <div
-            className={`relative border-2 border-dashed rounded-2xl p-12 sm:p-14 md:p-16 bg-white shadow-sm transition flex flex-col gap-6 items-center justify-center border-gray-300 hover:border-indigo-400 min-h-[50vh] sm:min-h-[55vh]`}
+            className={`relative rounded-2xl p-12 sm:p-14 md:p-16 bg-white shadow-sm transition flex flex-col gap-6 items-center justify-center min-h-[50vh] sm:min-h-[55vh] ${hasActiveUpload ? 'border-0' : 'border-2 border-dashed border-gray-300 hover:border-indigo-400'}`}
+            style={hasActiveUpload ? {
+              background: `conic-gradient(from 0deg at 50% 50%, 
+                #6366f1 0deg, 
+                #6366f1 ${overallProgress * 3.6}deg, 
+                #e5e7eb ${overallProgress * 3.6}deg, 
+                #e5e7eb 360deg), 
+                padding-box`,
+              border: '3px solid transparent',
+              backgroundClip: 'padding-box, border-box',
+              boxShadow: hasActiveUpload ? `0 0 20px rgba(99, 102, 241, ${Math.min(overallProgress / 100 * 0.5, 0.5)})` : undefined
+            } : {}}
             onDrop={onDrop}
             onDragOver={onDragOver}
             onClick={onDropzoneClick}
@@ -290,13 +305,10 @@ export default function Home() {
                         {item.file.name}
                       </div>
 
-                      {/* 进度条仅在上传中显示，错误/完成时隐藏，避免停在 80% */}
+                      {/* 上传中显示半透明遮罩 */}
                       {item.status === 'uploading' && (
-                        <div className="absolute left-2 right-2 top-1/2 -translate-y-1/2 h-1.5 rounded-full bg-white/60 backdrop-blur-[2px]">
-                          <div
-                            className="h-full rounded-full bg-gradient-to-r from-indigo-500 to-violet-500 transition-all duration-300"
-                            style={{ width: `${item.progress}%` }}
-                          />
+                        <div className="absolute inset-0 bg-black/20 backdrop-blur-[1px] rounded-lg flex items-center justify-center">
+                          <div className="w-6 h-6 border-2 border-white/60 border-t-white rounded-full animate-spin"></div>
                         </div>
                       )}
 
