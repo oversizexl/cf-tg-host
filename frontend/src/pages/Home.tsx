@@ -2,9 +2,6 @@ import React, { useEffect, useRef, useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
 import { logout, uploadWithProgress } from '../lib/api'
 import Toast from '../components/Toast'
-import ProgressEffects from '../components/ProgressEffects'
-import EffectSelector from '../components/EffectSelector'
-import { ProgressEffectType, DEFAULT_PROGRESS_EFFECT } from '../config/progressEffects'
 
 
 export default function Home() {
@@ -33,8 +30,7 @@ export default function Home() {
   const overallProgress = queue.length > 0 ? 
     queue.reduce((sum, item) => sum + (item.progress || 0), 0) / queue.length : 0
   
-  // 进度条特效类型
-  const [progressEffect, setProgressEffect] = useState<ProgressEffectType>(DEFAULT_PROGRESS_EFFECT)
+
 
   // 内部导航拦截：捕获文档中的 a 链接点击，上传中给出确认
   useEffect(() => {
@@ -220,13 +216,9 @@ export default function Home() {
           onClose={() => setToasts(prev => prev.filter(x => x.id !== t.id))}
         />
       ))}
-      {/* 浮动操作区：特效选择器 / 历史图片 / 退出登录 */}
+      {/* 浮动操作区：历史图片 / 退出登录 */}
       <div className="fixed top-4 right-4 z-40">
         <div className="flex items-center gap-2 bg-white/80 backdrop-blur border border-gray-200 rounded-full px-2 py-1 shadow-sm">
-          <EffectSelector 
-            currentEffect={progressEffect}
-            onEffectChange={setProgressEffect}
-          />
           <Link
             to="/gallery"
             aria-label="历史图片"
@@ -268,15 +260,58 @@ export default function Home() {
               </button>
             </div>
           )}
-          <ProgressEffects
-            effectType={progressEffect}
-            progress={overallProgress}
-            isActive={hasActiveUpload}
-            className="relative rounded-2xl p-12 sm:p-14 md:p-16 bg-white shadow-sm transition flex flex-col gap-6 items-center justify-center min-h-[50vh] sm:min-h-[55vh]"
+          <div
+            className={`relative rounded-2xl p-12 sm:p-14 md:p-16 bg-white shadow-sm transition flex flex-col gap-6 items-center justify-center min-h-[50vh] sm:min-h-[55vh] overflow-hidden ${
+              hasActiveUpload ? 'border-0' : 'border-2 border-dashed border-gray-300 hover:border-indigo-400'
+            }`}
+            style={hasActiveUpload ? {
+              border: '3px solid transparent',
+              background: `
+                linear-gradient(white, white) padding-box,
+                linear-gradient(
+                  to top,
+                  #6366f1 0%,
+                  #6366f1 ${overallProgress}%,
+                  #e5e7eb ${overallProgress}%,
+                  #e5e7eb 100%
+                ) border-box
+              `
+            } : {}}
             onDrop={onDrop}
             onDragOver={onDragOver}
             onClick={onDropzoneClick}
           >
+            {/* 波浪效果的 SVG - 仅在上传中显示 */}
+            {hasActiveUpload && (
+              <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+                <svg
+                  className="absolute bottom-0 left-0 w-full"
+                  style={{ height: `${overallProgress}%` }}
+                  viewBox="0 0 400 100"
+                  preserveAspectRatio="none"
+                >
+                  <defs>
+                    <linearGradient id="waveGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="rgba(99, 102, 241, 0.3)" />
+                      <stop offset="100%" stopColor="rgba(99, 102, 241, 0.1)" />
+                    </linearGradient>
+                  </defs>
+                  <path
+                    d="M0,50 Q100,30 200,50 T400,50 L400,100 L0,100 Z"
+                    fill="url(#waveGradient)"
+                  >
+                    <animate
+                      attributeName="d"
+                      values="M0,50 Q100,30 200,50 T400,50 L400,100 L0,100 Z;
+                               M0,50 Q100,70 200,50 T400,50 L400,100 L0,100 Z;
+                               M0,50 Q100,30 200,50 T400,50 L400,100 L0,100 Z"
+                      dur="3s"
+                      repeatCount="indefinite"
+                    />
+                  </path>
+                </svg>
+              </div>
+            )}
             <input
               ref={inputRef}
               type="file"
@@ -378,7 +413,7 @@ export default function Home() {
                 </svg>
               </button>
             )}
-          </ProgressEffects>
+          </div>
         </div>
       </main>
     </div>
