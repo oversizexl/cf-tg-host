@@ -332,7 +332,11 @@ export default function Home() {
             )}
             {queue.length > 0 && (
               <>
-                <div className="w-full grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 justify-items-center mt-[-20px]">
+                <div className={`w-full mt-[-20px] ${
+                  queue.length <= 4 
+                    ? 'flex flex-wrap justify-center gap-4' 
+                    : 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 justify-items-center'
+                }`}>
                   {queue.map(item => (
                     <div key={item.id} className="group relative w-[120px] h-[120px] rounded-lg overflow-hidden bg-gray-100 shadow-inner">
                       <img src={item.preview} alt={item.file.name} className="w-full h-full object-cover" />
