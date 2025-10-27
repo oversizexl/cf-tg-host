@@ -3,12 +3,6 @@ export async function onRequest(context) {
   const url = new URL(request.url);
   let fileUrl = "https://telegra.ph/" + url.pathname + url.search;
   const fileId = url.pathname.split(".")[0].split("/")[2];
-
-  console.log('Referer:', referer);
-  console.log('Origin:', origin);
-  console.log('URL Origin:', url.origin);
-  console.log('Allowed Origins:', Array.from(allowed));
-  console.log('Allowed Referer:', allowedReferer);
   
   // 防盗链检查
   const referer = request.headers.get("Referer");
@@ -40,6 +34,12 @@ export async function onRequest(context) {
     // ✅ 关键修改：允许无 Referer 的直接访问
     allowedReferer = true;
   }
+
+  console.log('Referer:', referer);
+  console.log('Origin:', origin);
+  console.log('URL Origin:', url.origin);
+  console.log('Allowed Origins:', Array.from(allowed));
+  console.log('Allowed Referer:', allowedReferer);
   
   if (!allowedReferer) {
     return new Response("Hotlink forbidden", {
@@ -50,8 +50,7 @@ export async function onRequest(context) {
       }
     });
   }
-  
-  // 后续代码保持不变...
+
   if (fileId) {
     const filePath = await getFilePath(env, fileId);
     fileUrl = `https://api.telegram.org/file/bot${env.TG_Bot_Token}/${filePath}`;
