@@ -5,6 +5,13 @@ export async function onRequest(context) {
   let fileUrl = "https://telegra.ph/" + url.pathname + url.search;
   // 提取 Telegram file_id（不带扩展名）
   const fileId = url.pathname.split(".")[0].split("/")[2];
+
+  console.log('Referer:', referer);
+  console.log('Origin:', origin);
+  console.log('URL Origin:', url.origin);
+  console.log('Allowed Origins:', Array.from(allowed));
+  console.log('Allowed Referer:', allowedReferer);
+  
   // 防盗链（严格）：必须携带本站或白名单 Referer；否则 403，并禁止缓存
   const referer = request.headers.get("Referer");
   const allowed = new Set([
