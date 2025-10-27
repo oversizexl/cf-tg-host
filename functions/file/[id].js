@@ -28,18 +28,10 @@ export async function onRequest(context) {
       }
     } catch {}
   } else if (origin) {
-    // 检查 Origin 头
     allowedReferer = allowed.has(origin);
   } else {
-    // ✅ 关键修改：允许无 Referer 的直接访问
-    allowedReferer = true;
+    allowedReferer = true; // 允许直接访问
   }
-
-  console.log('Referer:', referer);
-  console.log('Origin:', origin);
-  console.log('URL Origin:', url.origin);
-  console.log('Allowed Origins:', Array.from(allowed));
-  console.log('Allowed Referer:', allowedReferer);
   
   if (!allowedReferer) {
     return new Response("Hotlink forbidden", {
@@ -50,7 +42,7 @@ export async function onRequest(context) {
       }
     });
   }
-
+  
   if (fileId) {
     const filePath = await getFilePath(env, fileId);
     fileUrl = `https://api.telegram.org/file/bot${env.TG_Bot_Token}/${filePath}`;
@@ -78,14 +70,68 @@ export async function onRequest(context) {
       }
     }
     
-    const headers = new Headers(response.headers);
+    // ✅ 重新构建响应头
+    const headers = new Headers();
     const filename = fullFileName || "file";
-    headers.delete("Content-Disposition");
+    const ext = filename.split('.').pop()?.toLowerCase() || '';
+    
+    // MIME 类型映射表
+    const getMimeType = (extension) => {
+      const types = {
+        // 图片
+        'png': 'image/png',
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'gif': 'image/gif',
+        'webp': 'image/webp',
+        'bmp': 'image/bmp',
+        'svg': 'image/svg+xml',
+        'ico': 'image/x-icon',
+        'tiff': 'image/tiff',
+        'tif': 'image/tiff',
+        // 视频
+        'mp4': 'video/mp4',
+        'webm': 'video/webm',
+        'ogg': 'video/ogg',
+        'mov': 'video/quicktime',
+        'avi': 'video/x-msvideo',
+        // 音频
+        'mp3': 'audio/mpeg',
+        'wav': 'audio/wav',
+        'm4a': 'audio/mp4',
+        // 文档
+        'pdf': 'application/pdf',
+        'txt': 'text/plain',
+        'html': 'text/html',
+        'json': 'application/json'
+      };
+      return types[extension] || 'image/png'; // 默认作为图片处理
+    };
+    
+    // 设置正确的 Content-Type
+    headers.set("Content-Type", getMimeType(ext));
+    
+    // 设置为内联预览模式
     headers.set("Content-Disposition", `inline; filename="${filename}"`);
     
+    // 复制必要的头部
+    const contentLength = response.headers.get("Content-Length");
+    if (contentLength) {
+      headers.set("Content-Length", contentLength);
+    }
+    
+    // 设置缓存
+    headers.set("Cache-Control", "public, max-age=31536000, immutable");
+    
+    // 安全头部
+    headers.set("X-Content-Type-Options", "nosniff");
+    
+    // 跨域设置（如果需要）
+    headers.set("Access-Control-Allow-Origin", "*");
+    
     return new Response(response.body, {
-      status: response.status,
-      statusText: response.statusText,
+      status: 200,
+      statusText: "OK",
       headers
     });
   }
