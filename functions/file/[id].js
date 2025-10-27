@@ -80,6 +80,7 @@ export async function onRequest(context) {
     
     const headers = new Headers(response.headers);
     const filename = fullFileName || "file";
+    headers.delete("Content-Disposition");
     headers.set("Content-Disposition", `inline; filename="${filename}"`);
     
     return new Response(response.body, {
