@@ -26,15 +26,15 @@ export async function onRequest(context) {
       }
     } catch {}
   }
-  // if (!allowedReferer) {
-  //   return new Response("Hotlink forbidden", {
-  //     status: 403,
-  //     headers: {
-  //       "Cache-Control": "no-store",
-  //       "Content-Type": "text/plain; charset=utf-8"
-  //     }
-  //   });
-  // }
+  if (!allowedReferer) {
+    return new Response("Hotlink forbidden", {
+      status: 403,
+      headers: {
+        "Cache-Control": "no-store",
+        "Content-Type": "text/plain; charset=utf-8"
+      }
+    });
+  }
   if (fileId) {
     const filePath = await getFilePath(env, fileId);
     fileUrl = `https://api.telegram.org/file/bot${env.TG_Bot_Token}/${filePath}`;
