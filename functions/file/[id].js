@@ -34,7 +34,12 @@ export async function onRequest(context) {
         "Content-Type": "text/plain; charset=utf-8"
       }
     });
+  } else {
+    // 允许无 Referer 的直接访问
+    allowedReferer = true;
   }
+
+  
   if (fileId) {
     const filePath = await getFilePath(env, fileId);
     fileUrl = `https://api.telegram.org/file/bot${env.TG_Bot_Token}/${filePath}`;
